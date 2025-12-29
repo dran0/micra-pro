@@ -25,6 +25,14 @@ public class ScaleImplementationCollectionService(IBluetoothService bluetoothSer
                     .All(s => dev.ServiceIds.Select(id => id.ToLower()).Contains(s))
         ),
         new(
+            typeof(Felicita.Scale).FullName!,
+            s => new Felicita.Scale(s.Identifier, bluetoothService),
+            dev =>
+                Felicita
+                    .Scale.RequiredServiceIds.Select(s => s.ToLower())
+                    .All(s => dev.ServiceIds.Select(id => id.ToLower()).Contains(s))
+        ),
+        new(
             typeof(Acaia.OldStyle.Scale).FullName!,
             s => new Acaia.OldStyle.Scale(s.Identifier, bluetoothService),
             dev =>
