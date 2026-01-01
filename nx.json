@@ -23,13 +23,13 @@
     "publish": { "dependsOn": ["build"], "cache": false },
     "serve": { "dependsOn": ["^codegen"] },
     "@nx-dotnet/core:test": {
-      "options": { "noBuild": true, "verbosity": "quiet" },
+      "options": { "noBuild": true, "verbosity": "detailed" },
       "dependsOn": ["build"]
     },
     "@nx-dotnet/core:build": {
       "outputs": ["{projectRoot}/bin", "{projectRoot}/obj"],
       "dependsOn": ["^build", "codegen", "^codegen"],
-      "options": { "verbosity": "quiet" }
+      "options": { "verbosity": "detailed" }
     },
     "@nx/eslint:lint": {
       "cache": true,

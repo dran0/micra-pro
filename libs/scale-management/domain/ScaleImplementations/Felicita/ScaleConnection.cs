@@ -1,4 +1,5 @@
 using System.Reactive.Linq;
+using System.Linq;
 using MicraPro.ScaleManagement.DataDefinition;
 using MicraPro.ScaleManagement.DataDefinition.ValueObjects;
 using MicraPro.ScaleManagement.Domain.BluetoothAccess;
@@ -13,9 +14,9 @@ public class ScaleConnection(
 ) : IScaleConnection
 {
 
-    private DateTime _lastWeightTimestamp = DateTime.MinValue;
-    private double _lastWeight = 0;
-    private double[] _flowAverage = [0, 0, 0, 0];
+    private static DateTime _lastWeightTimestamp = DateTime.MinValue;
+    private static  double _lastWeight = 0;
+    private static double[] _flowAverage = new double[] { 0, 0, 0, 0 };
     private const double FlowThreshold = 10;
 
     public async Task DisconnectAsync(CancellationToken ct)
@@ -24,7 +25,7 @@ public class ScaleConnection(
     }
 
     public Task TareAsync(CancellationToken ct) =>
-        CommandCharacteristic.SendCommandAsync(Constants.CMD_TARE, ct);
+        commandCharacteristic.SendCommandAsync(new byte[] { Constants.CMD_TARE }, ct);
 
     private static ScaleDataPoint? FromFeliciateWeightData(byte[] data)
     {
@@ -32,19 +33,17 @@ public class ScaleConnection(
             return null;
         var weightSymbolDataPointsRaw = data.Skip(3).Take(6);
         var weightString = from b in weightSymbolDataPointsRaw
-            select (string) b - 48;
+            select (b - 48).ToString();
         if (!double.TryParse(string.Concat(weightString), out var weightFloat))
             return null;
-        var scaleUnit = data.Skip(9).Take(2).decodeToString("utf-8");
-        return !weightFloat.HasValue
-            ? null
-            : new ScaleDataPoint(DateTime.Now, CalculateFlow(weightFloat.Value), weightFloat.Value);
+        String scaleUnit = Convert.ToBase64String(data.Skip(9).Take(2).ToArray());
+        return new ScaleDataPoint(DateTime.Now, CalculateFlow(weightFloat), weightFloat);
     }
 
     public IObservable<ScaleDataPoint> Data =>
         weightDataCharacteristicObservable.Select(FromFeliciateWeightData).Where(v => v != null)!;
 
-    private double CalculateFlow(double weight)
+    private static double CalculateFlow(double weight)
     {
         var now = DateTime.Now;
         var diffTime = now.Subtract(_lastWeightTimestamp).TotalSeconds;
